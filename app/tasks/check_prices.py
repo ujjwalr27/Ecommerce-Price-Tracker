@@ -5,7 +5,7 @@ import logging
 import argparse
 from datetime import datetime
 
-# Add parent directory to path to make imports work
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from app.models.database import Database
@@ -13,7 +13,6 @@ from app.scrapers.scraper_factory import ScraperFactory
 from app.services.price_analysis import PriceAnalyzer
 from app.services.notification_service import EmailReportService
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -38,13 +37,13 @@ def check_product(url: str) -> bool:
     try:
         logger.info(f"Checking price for {url}")
         
-        # Get the appropriate scraper for this URL
+        
         scraper = ScraperFactory.get_scraper(url)
         
-        # Scrape the product data
+        
         product_data = scraper.scrape()
         
-        # Store the data in the database
+        
         db = Database()
         db.add_price(product_data)
         
@@ -61,7 +60,7 @@ def check_all_products(recipient_email=None):
     """Check all tracked products for price updates and send report to specified email"""
     logger.info("Starting price check for all products")
     
-    # Get all tracked products
+    
     db = Database()
     products = db.get_all_products()
     db.close()
@@ -73,14 +72,13 @@ def check_all_products(recipient_email=None):
     logger.info(f"Found {len(products)} products to check")
     success_count = 0
     
-    # Check each product
+    
     for product in products:
         if check_product(product.url):
             success_count += 1
     
     logger.info(f"Completed price checks: {success_count}/{len(products)} successful")
     
-    # Analyze prices and send report if email specified
     if recipient_email:
         logger.info(f"Sending price report to {recipient_email}")
         report_service = EmailReportService()
@@ -89,7 +87,6 @@ def check_all_products(recipient_email=None):
         else:
             logger.error(f"Failed to send price report to {recipient_email}")
     else:
-        # For backward compatibility, still analyze prices
         analyzer = PriceAnalyzer()
         alerts = analyzer.analyze_all_products()
         analyzer.close()

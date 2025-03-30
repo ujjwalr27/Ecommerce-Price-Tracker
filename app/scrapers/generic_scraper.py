@@ -10,7 +10,6 @@ logger = logging.getLogger('scraper.generic')
 class GenericScraper(BaseScraper):
     """Generic scraper that attempts to extract product data from various e-commerce sites"""
     
-    # Common price selectors across various e-commerce sites
     PRICE_SELECTORS = [
         ".price", 
         ".product-price", 
@@ -32,7 +31,7 @@ class GenericScraper(BaseScraper):
         ".current-price"
     ]
     
-    # Common title selectors
+   
     TITLE_SELECTORS = [
         "h1.product-title", 
         "h1.product-name", 
@@ -44,7 +43,7 @@ class GenericScraper(BaseScraper):
         ".title"
     ]
     
-    # Common image selectors
+   
     IMAGE_SELECTORS = [
         ".product-image img", 
         ".product-main-image img", 
@@ -63,11 +62,10 @@ class GenericScraper(BaseScraper):
                 price_text = price_elem.get_text().strip()
                 logger.debug(f"Found price element with text: {price_text}")
                 
-                # Detect currency symbol
+
                 currency_match = re.search(r'[$€£¥₹]', price_text)
                 currency = currency_match.group(0) if currency_match else 'USD'
                 
-                # If no currency symbol found but URL contains country indicators, set default currency
                 if not currency_match and hasattr(self, 'url'):
                     if '.in/' in self.url.lower():
                         currency = '₹'
@@ -76,53 +74,41 @@ class GenericScraper(BaseScraper):
                     elif any(x in self.url.lower() for x in ['.de/', '.fr/', '.it/', '.es/']):
                         currency = '€'
                 
-                # Map currency symbol to currency code
                 currency_map = {'$': 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY', '₹': 'INR'}
                 currency_code = currency_map.get(currency, 'USD')
                 
                 try:
-                    # Handle case of duplicated price - if the price appears twice in the string
-                    # First, clean the string of all non-price characters
                     price_text = re.sub(r'[$€£¥₹]', '', price_text)
                     price_text = re.sub(r'[^\d.,]', '', price_text)
                     
-                    # Check if it's a duplicate pattern by looking for repeating digit groups
                     if len(price_text) > 0:
-                        # If the price appears twice consecutively, take only the first instance
-                        # For example: "37490.0037490.00" -> "37490.00"
                         half_length = len(price_text) // 2
                         if half_length > 0 and price_text[:half_length] == price_text[half_length:]:
                             price_text = price_text[:half_length]
-                        elif len(price_text) > 8:  # If it's a long string, likely contains duplicates
-                            # Try to find a sensible price pattern
+                        elif len(price_text) > 8:  
                             match = re.search(r'([\d,]+\.?\d*)', price_text)
                             if match:
                                 price_text = match.group(1)
                     
-                    # Replace commas and convert to float
                     price = float(price_text.replace(',', ''))
                     
-                    # Log successful price extraction
                     logger.info(f"Successfully extracted price: {price} {currency_code}")
                     return price, currency_code
                 except (ValueError, AttributeError) as e:
                     logger.warning(f"Could not convert price text to float: {price_text}, Error: {e}")
         
-        # If no price found with regular selectors, try special Amazon format with separate whole and fraction parts
+       
         try:
             if soup.select_one("span.a-price-whole") and soup.select_one("span.a-price-fraction"):
                 whole_part = soup.select_one("span.a-price-whole").get_text().strip().replace(",", "")
                 fraction_part = soup.select_one("span.a-price-fraction").get_text().strip()
                 price_text = f"{whole_part}.{fraction_part}"
                 
-                # Determine currency from the page
-                # First check symbol attribute
                 currency_code = "USD"
                 if soup.select_one("span.a-price-symbol"):
                     currency_symbol = soup.select_one("span.a-price-symbol").get_text().strip()
                     currency_map = {'$': 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY', '₹': 'INR'}
                     currency_code = currency_map.get(currency_symbol, 'USD')
-                # Otherwise try to guess from URL
                 elif hasattr(self, 'url'):
                     if '.in/' in self.url.lower():
                         currency_code = 'INR'
@@ -142,7 +128,6 @@ class GenericScraper(BaseScraper):
             if title_elem:
                 return title_elem.get_text().strip()
         
-        # Fallback to page title if specific title not found
         title_tag = soup.title
         if title_tag:
             return title_tag.get_text().strip()
@@ -158,14 +143,12 @@ class GenericScraper(BaseScraper):
             elif img_elem and img_elem.has_attr('data-src'):
                 return img_elem['data-src']
         
-        # Return None if image not found, as it's optional
         return None
     
     def _extract_data(self, html: str) -> Dict[str, Any]:
         """Extract product data from HTML"""
         soup = BeautifulSoup(html, 'lxml')
         
-        # Extract product details
         price, currency = self._extract_price(soup)
         title = self._extract_title(soup)
         image_url = self._extract_image_url(soup)

@@ -16,7 +16,6 @@ from models.database import Database
 from models.schemas import ProductData
 from services.notification_service import EmailReportService
 
-# Set page config
 st.set_page_config(
     page_title="Price Tracker Dashboard",
     page_icon="📊",
@@ -24,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+
 st.markdown("""
 <style>
     .main-header {
@@ -101,7 +100,7 @@ def fetch_all_products():
                     "added_at": product.added_at
                 })
             else:
-                # Try to scrape product info if no history
+                
                 try:
                     logger.info(f"No price history for {product.url}, attempting to fetch initial data")
                     scraper = ScraperFactory.get_scraper(product.url)
@@ -120,8 +119,7 @@ def fetch_all_products():
                     logger.info(f"Successfully fetched initial data for {product.url}")
                 except Exception as e:
                     logger.error(f"Failed to scrape product data for {product.url}: {e}")
-                    # Include product with minimal info if scraping fails
-                    # Try to get product name from any previous history
+                  
                     name = "Unknown Product"
                     if history and len(history) > 0:
                         name = history[0].name
@@ -138,7 +136,7 @@ def fetch_all_products():
                     })
         except Exception as e:
             logger.error(f"Error processing product {product.url}: {e}")
-            # Still include the product with error info
+           
             results.append({
                 "url": product.url,
                 "name": "Error Loading Product",
@@ -182,11 +180,11 @@ def add_new_product(url):
     logger.info(f"Attempting to add product: {url}")
     
     try:
-        # Validate URL
+       
         if not url.startswith(("http://", "https://")):
             return False, "Invalid URL. Make sure it starts with http:// or https://"
         
-        # Check if already tracked
+        
         db = Database()
         existing_products = [p.url for p in db.get_all_products()]
         
@@ -194,7 +192,7 @@ def add_new_product(url):
             db.close()
             logger.info(f"Product already being tracked: {url}")
             
-            # Try to refresh data for existing product
+           
             try:
                 scraper = ScraperFactory.get_scraper(url)
                 product_data = scraper.scrape()
@@ -205,14 +203,12 @@ def add_new_product(url):
                 logger.error(f"Failed to refresh data: {e}")
                 return False, "This product is already being tracked."
         
-        # Scrape initial data
         logger.info(f"Creating scraper for URL: {url}")
         scraper = ScraperFactory.get_scraper(url)
         
         logger.info(f"Scraping data from URL: {url}")
         product_data = scraper.scrape()
         
-        # Add to database
         logger.info(f"Adding product to database: {url}")
         db.add_product(url)
         
@@ -274,13 +270,11 @@ def remove_product(url):
 def main():
     st.markdown('<h1 class="main-header">Price Tracker Dashboard</h1>', unsafe_allow_html=True)
     
-    # Configure logging
     logger = logging.getLogger('dashboard')
     logger.setLevel(logging.INFO)
     if not logger.handlers:
         logger.addHandler(logging.StreamHandler())
     
-    # Sidebar for adding new products
     st.sidebar.markdown('<h2 class="subheader">Add New Product</h2>', unsafe_allow_html=True)
     with st.sidebar.form("add_product_form"):
         new_url = st.text_input("Product URL")
@@ -290,12 +284,12 @@ def main():
             success, message = add_new_product(new_url)
             if success:
                 st.sidebar.success(message)
-                # Force refresh after adding product
+                
                 st.rerun()
             else:
                 st.sidebar.error(message)
     
-    # Sidebar for sending price reports
+   
     st.sidebar.markdown('<h2 class="subheader">Send Price Report</h2>', unsafe_allow_html=True)
     with st.sidebar.form("send_report_form"):
         email = st.text_input("Email Address", placeholder="your@email.com")
@@ -308,7 +302,7 @@ def main():
             else:
                 st.sidebar.error(message)
     
-    # Sidebar for removing products
+    
     st.sidebar.markdown('<h2 class="subheader">Remove Product</h2>', unsafe_allow_html=True)
     with st.sidebar.form("remove_product_form"):
         product_url = st.text_input("Product URL", placeholder="https://www.example.com/product")

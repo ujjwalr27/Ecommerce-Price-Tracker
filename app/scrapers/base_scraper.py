@@ -11,20 +11,20 @@ import logging
 
 from app.models.schemas import ProductData
 
-# Configure logging
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('scraper')
 
-# Load environment variables
+
 load_dotenv()
 
 class BaseScraper(ABC):
     """Base class for all scrapers"""
     
-    # List of realistic user agents to rotate
+   
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
@@ -50,26 +50,26 @@ class BaseScraper(ABC):
     
     def __init__(self, url: str, headers: Optional[Dict[str, str]] = None):
         self.url = url
-        # Choose a random user agent
+      
         user_agent = random.choice(self.USER_AGENTS)
-        # Start with default headers
+        
         self.headers = dict(self.DEFAULT_HEADERS)
         self.headers["User-Agent"] = user_agent
         
-        # Add any custom headers
+       
         if headers:
             self.headers.update(headers)
     
     def _fetch_page(self) -> str:
         """Fetch the HTML content of the product page with retries"""
         max_retries = 3
-        retry_delay = 2  # seconds
+        retry_delay = 2  
         
         for attempt in range(max_retries):
             try:
                 logger.info(f"Fetching {self.url} (Attempt {attempt+1}/{max_retries})")
                 
-                # Add referer for more realistic behavior
+                
                 if attempt > 0:
                     self.headers["Referer"] = "https://www.google.com/"
                 
@@ -82,13 +82,13 @@ class BaseScraper(ABC):
                 )
                 response.raise_for_status()
                 
-                # Check if we got a "captcha" or "robot check" page
+               
                 if "captcha" in response.text.lower() or "robot check" in response.text.lower():
                     logger.warning(f"Captcha detected on attempt {attempt+1}")
                     if attempt < max_retries - 1:
-                        # Change user agent for next attempt
+                       
                         self.headers["User-Agent"] = random.choice(self.USER_AGENTS)
-                        time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                        time.sleep(retry_delay * (attempt + 1))  
                         continue
                     else:
                         raise requests.RequestException("Captcha detected, could not bypass")
@@ -97,7 +97,7 @@ class BaseScraper(ABC):
             except requests.RequestException as e:
                 logger.error(f"Failed to fetch {self.url} on attempt {attempt+1}: {e}")
                 if attempt < max_retries - 1:
-                    time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                    time.sleep(retry_delay * (attempt + 1)) 
                 else:
                     raise
     
@@ -112,12 +112,11 @@ class BaseScraper(ABC):
         html = self._fetch_page()
         raw_data = self._extract_data(html)
         
-        # Add URL and timestamp if not present
+
         raw_data["url"] = self.url
         if "timestamp" not in raw_data:
             raw_data["timestamp"] = datetime.utcnow()
             
-        # Validate with Pydantic model
         try:
             product_data = ProductData(**raw_data)
             return product_data.dict()

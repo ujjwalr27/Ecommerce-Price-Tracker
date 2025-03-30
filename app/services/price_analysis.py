@@ -8,15 +8,11 @@ import re
 from app.models.database import Database
 from app.models.schemas import PriceAlert
 
-# Load environment variables
 load_dotenv()
 logger = logging.getLogger('price_analysis')
 
-# Get price drop threshold from environment or use default
-# Extract only numeric part in case there are comments in the .env file
 try:
     threshold_value = os.getenv("PRICE_DROP_THRESHOLD", "5")
-    # Extract just the numeric part
     numeric_part = re.search(r'^\d+\.?\d*', threshold_value)
     if numeric_part:
         PRICE_DROP_THRESHOLD = float(numeric_part.group(0))
@@ -52,21 +48,17 @@ class PriceAnalyzer:
         Returns:
             PriceAlert if significant price drop detected, None otherwise
         """
-        # Get price history
         history = self.db.get_price_history(url)
         
         if not history or len(history) < 2:
             logger.info(f"Not enough price history for {url} to analyze")
             return None
         
-        # Get latest price record
         latest = history[-1]
         
-        # Strategy 1: Compare to previous price
         previous = history[-2]
         prev_drop_pct = self._calculate_drop_percentage(previous.price, latest.price)
         
-        # Strategy 2: Compare to highest price in last 30 days
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         last_30_days = [record for record in history if record.timestamp >= thirty_days_ago]
         
@@ -76,15 +68,12 @@ class PriceAnalyzer:
         else:
             highest_drop_pct = 0
         
-        # Use the larger drop percentage
         drop_pct = max(prev_drop_pct, highest_drop_pct)
         reference_price = previous.price if prev_drop_pct >= highest_drop_pct else highest_price.price
         
-        # Check if drop exceeds threshold
         if drop_pct >= self.threshold:
             logger.info(f"Price drop detected for {latest.name}: {drop_pct:.1f}% (from {reference_price} to {latest.price})")
             
-            # Create alert
             alert = PriceAlert(
                 product_name=latest.name,
                 product_url=url,

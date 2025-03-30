@@ -5,7 +5,6 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-# Add parent directory to path to make imports work
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from app.models.database import Database
@@ -30,13 +29,10 @@ def scrape_product(url: str) -> bool:
     try:
         logger.info(f"Scraping price for {url}")
         
-        # Get the appropriate scraper for this URL
         scraper = ScraperFactory.get_scraper(url)
         
-        # Scrape the product data
         product_data = scraper.scrape()
         
-        # Store the data in the database
         db = Database()
         db.add_price(product_data)
         db.close()
@@ -109,7 +105,6 @@ def send_alerts(alerts: List[PriceAlert]) -> int:
     
     logger.info(f"Sending {len(alerts)} price drop alerts")
     
-    # Send email alerts
     email_notifier = EmailNotifier()
     sent_count = email_notifier.send_batch_alerts(alerts)
     
@@ -130,13 +125,10 @@ def process_all() -> dict:
     start_time = datetime.now()
     logger.info("Starting full processing pipeline")
     
-    # Scrape all products
     scraped_count = scrape_all_products()
     
-    # Analyze for price drops
     alerts = analyze_prices()
     
-    # Send alerts
     sent_count = send_alerts(alerts)
     
     end_time = datetime.now()

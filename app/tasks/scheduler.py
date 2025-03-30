@@ -10,15 +10,12 @@ from apscheduler.triggers.interval import IntervalTrigger
 from dotenv import load_dotenv
 import argparse
 
-# Add parent directory to path to make imports work
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from app.tasks.check_prices import check_all_products
 
-# Load environment variables
 load_dotenv()
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -39,7 +36,6 @@ def start_scheduler(hours_interval=None, email=None, daily_report=False):
         daily_report: Whether to send daily reports instead of on every check
     """
     try:
-        # Get interval from environment or parameter
         interval_hours = hours_interval or float(os.getenv("SCRAPE_INTERVAL_HOURS", "1"))
         
         logger.info(f"Starting scheduler with {interval_hours} hour interval")
@@ -50,24 +46,20 @@ def start_scheduler(hours_interval=None, email=None, daily_report=False):
             else:
                 logger.info(f"Will send report after every price check to {email}")
         
-        # Create scheduler
         scheduler = BackgroundScheduler()
         
-        # Schedule price check job
         def check_job():
             logger.info("Running scheduled price check")
-            # Only send email if not using daily reports or if it's the first run
+            
             send_to_email = email if (not daily_report or not hasattr(check_job, 'has_run')) else None
             check_all_products(recipient_email=send_to_email)
             check_job.has_run = True
         
-        # Schedule daily report job if needed
         def send_daily_report():
             if email and daily_report:
                 logger.info(f"Sending daily report to {email}")
                 check_all_products(recipient_email=email)
         
-        # Add price check job
         scheduler.add_job(
             check_job,
             IntervalTrigger(hours=interval_hours),
@@ -76,7 +68,6 @@ def start_scheduler(hours_interval=None, email=None, daily_report=False):
             replace_existing=True
         )
         
-        # Add daily report job if needed
         if email and daily_report:
             scheduler.add_job(
                 send_daily_report,
@@ -86,11 +77,9 @@ def start_scheduler(hours_interval=None, email=None, daily_report=False):
                 replace_existing=True
             )
         
-        # Start scheduler
         scheduler.start()
         logger.info("Scheduler started successfully")
         
-        # Keep the script running
         try:
             while True:
                 time.sleep(60)

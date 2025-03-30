@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from app.models.schemas import PriceAlert
 from app.models.database import Database
 
-# Load environment variables
 load_dotenv()
 logger = logging.getLogger('notification')
 
@@ -48,7 +47,6 @@ class EmailReportService:
             return False
         
         try:
-            # Fetch all product data from database
             db = Database()
             products = db.get_all_products()
             
@@ -57,10 +55,8 @@ class EmailReportService:
                 db.close()
                 return False
             
-            # Create email content
             subject = f"Price Tracker Report - {datetime.now().strftime('%Y-%m-%d')}"
             
-            # Start building HTML content
             html_content = f"""
             <html>
             <head>
@@ -96,7 +92,6 @@ class EmailReportService:
                         </tr>
             """
             
-            # Add each product to the report
             for product in products:
                 history = db.get_price_history(product.url)
                 
@@ -106,25 +101,25 @@ class EmailReportService:
                 latest = history[-1]
                 first = history[0]
                 
-                # Calculate price stats
+
                 lowest = min(history, key=lambda x: x.price)
                 highest = max(history, key=lambda x: x.price)
                 
-                # Calculate price change
+                
                 price_change = latest.price - first.price
                 price_change_pct = (price_change / first.price) * 100 if first.price > 0 else 0
                 
-                # Determine price change direction
+                
                 price_class = "price-down" if price_change < 0 else "price-up" if price_change > 0 else ""
                 price_symbol = "↓" if price_change < 0 else "↑" if price_change > 0 else "-"
                 
-                # Format the price change as a string
+                
                 if price_change != 0:
                     price_change_str = f"{price_symbol} {abs(price_change):.2f} ({abs(price_change_pct):.1f}%)"
                 else:
                     price_change_str = "No change"
                 
-                # Add row for this product
+                
                 html_content += f"""
                     <tr>
                         <td><a href="{product.url}">{latest.name}</a></td>
@@ -136,7 +131,6 @@ class EmailReportService:
                     </tr>
                 """
             
-            # Close the table and add footer
             html_content += """
                     </table>
                     <p>This report shows the current status of all products you're tracking.</p>
@@ -147,16 +141,13 @@ class EmailReportService:
             </html>
             """
             
-            # Create message
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
             msg['From'] = self.gmail_user
             msg['To'] = recipient_email
             
-            # Attach HTML content
             msg.attach(MIMEText(html_content, 'html'))
             
-            # Send email
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
                 server.login(self.gmail_user, self.gmail_password)
                 server.send_message(msg)
@@ -192,7 +183,7 @@ class EmailNotifier:
         return 0
 
 
-# Optional Discord notifier implementation
+    
 try:
     import aiohttp
     import asyncio
@@ -230,12 +221,11 @@ try:
                 logger.error("Cannot send Discord notification: webhook URL not configured")
                 return False
             
-            # Create Discord embed message
             embed = {
                 "title": f"Price Drop: {alert.product_name}",
                 "description": f"Price dropped from {alert.currency} {alert.old_price:.2f} to {alert.currency} {alert.new_price:.2f} ({alert.drop_percentage:.1f}% drop)",
                 "url": alert.product_url,
-                "color": 0x4CAF50,  # Green color
+                "color": 0x4CAF50,  
                 "fields": [
                     {
                         "name": "Old Price",
@@ -255,7 +245,6 @@ try:
                 ]
             }
             
-            # Add image if available
             if alert.image_url:
                 embed["thumbnail"] = {"url": alert.image_url}
             

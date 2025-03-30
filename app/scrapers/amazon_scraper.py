@@ -5,7 +5,6 @@ from typing import Dict, Any, Tuple
 
 from .base_scraper import BaseScraper
 
-# Domain identifier for the scraper factory
 DOMAIN = ["amazon.com", "amazon.in"]
 
 logger = logging.getLogger('scraper.amazon')
@@ -15,7 +14,6 @@ class Scraper(BaseScraper):
     
     def _extract_price(self, soup: BeautifulSoup) -> Tuple[float, str]:
         """Extract price from Amazon product page"""
-        # Try different price selectors specific to Amazon
         price_selectors = [
             "#priceblock_ourprice",
             "#priceblock_dealprice",
@@ -39,22 +37,18 @@ class Scraper(BaseScraper):
                 price_text = price_elem.get_text().strip()
                 logger.info(f"Found price element with selector '{selector}': '{price_text}'")
                 
-                # Detect currency
                 currency_match = re.search(r'[$€£¥₹]', price_text)
                 currency = currency_match.group(0) if currency_match else '$'
                 
-                # Extract numeric value from price text
                 price_text = re.sub(r'[$€£¥₹,]', '', price_text)
                 price_text = re.sub(r'[^\d.]', '', price_text)
                 
                 try:
                     price = float(price_text)
                     
-                    # Determine currency code
                     currency_map = {'$': 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY', '₹': 'INR'}
                     currency_code = currency_map.get(currency, 'USD')
                     
-                    # Check URL for country-specific currency if no symbol found
                     if currency == '$' and hasattr(self, 'url'):
                         domain = self.url.split('/')[2].lower()
                         if '.in' in domain:
@@ -69,7 +63,6 @@ class Scraper(BaseScraper):
                 except ValueError as e:
                     logger.warning(f"Failed to convert price text '{price_text}' to float: {e}")
         
-        # Try special Amazon format with separate whole and fraction parts
         logger.info("Trying to extract price from whole+fraction parts")
         try:
             whole_elements = soup.select("span.a-price-whole")
@@ -81,7 +74,6 @@ class Scraper(BaseScraper):
                 price_text = f"{whole_part}.{fraction_part}"
                 logger.info(f"Found whole+fraction parts: {whole_part}.{fraction_part}")
                 
-                # Determine currency from the page
                 currency_code = "USD"
                 symbol_elements = soup.select("span.a-price-symbol")
                 if symbol_elements:
@@ -89,7 +81,6 @@ class Scraper(BaseScraper):
                     currency_map = {'$': 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY', '₹': 'INR'}
                     currency_code = currency_map.get(currency_symbol, 'USD')
                     logger.info(f"Found currency symbol: {currency_symbol}")
-                # Otherwise try to guess from URL
                 elif hasattr(self, 'url'):
                     domain = self.url.split('/')[2].lower()
                     if '.in' in domain:
@@ -102,10 +93,8 @@ class Scraper(BaseScraper):
         except (ValueError, AttributeError, IndexError) as e:
             logger.warning(f"Failed to extract price using whole+fraction method: {e}")
         
-        # As a last resort, look for any price-like text in the page
         logger.info("Trying to find any price-like text on the page")
         try:
-            # Look for text that contains ₹ (Rupee symbol) followed by numbers
             if hasattr(self, 'url') and '.in' in self.url:
                 rupee_patterns = [
                     re.compile(r'₹\s*([\d,]+(\.\d+)?)'),
@@ -122,19 +111,19 @@ class Scraper(BaseScraper):
         except Exception as e:
             logger.warning(f"Failed to extract price using regex: {e}")
         
-        # Check for "Buy New" section which often contains price
+       
         try:
             buy_new_elements = soup.select("#buyNewSection .a-color-price")
             if buy_new_elements:
                 price_text = buy_new_elements[0].get_text().strip()
                 logger.info(f"Found price in Buy New section: {price_text}")
                 
-                # Extract numeric value
+                
                 price_text = re.sub(r'[$€£¥₹,]', '', price_text)
                 price_text = re.sub(r'[^\d.]', '', price_text)
                 price = float(price_text)
                 
-                # Determine currency (default to INR for amazon.in)
+                
                 currency_code = 'USD'
                 if hasattr(self, 'url'):
                     domain = self.url.split('/')[2].lower()
@@ -154,56 +143,54 @@ class Scraper(BaseScraper):
         if title_elem:
             return title_elem.get_text().strip()
         
-        # Fallback to page title
+        
         title_tag = soup.title
         if title_tag:
-            # Amazon titles often contain " : Amazon.com"
+            
             return title_tag.get_text().split(" : ")[0].strip()
         
         raise ValueError("Could not extract product title from Amazon page")
     
     def _extract_image_url(self, soup: BeautifulSoup) -> str:
         """Extract product image URL from Amazon page"""
-        # Try main product image
+        
         img_elem = soup.select_one("#landingImage") or soup.select_one("#imgBlkFront")
         if img_elem and img_elem.has_attr('src'):
             return img_elem['src']
         elif img_elem and img_elem.has_attr('data-a-dynamic-image'):
-            # Amazon sometimes stores image URLs in a data attribute as JSON
+           
             import json
             try:
                 images = json.loads(img_elem['data-a-dynamic-image'])
                 if images:
-                    # Get the first image URL (key)
+                   
                     return list(images.keys())[0]
             except (json.JSONDecodeError, IndexError):
                 pass
         
-        # Try other image selectors
+        
         for selector in ["#main-image", "#imgTagWrapperId img"]:
             img_elem = soup.select_one(selector)
             if img_elem and img_elem.has_attr('src'):
                 return img_elem['src']
         
-        # Return None if no image found
+        
         return None
     
     def _extract_data(self, html: str) -> Dict[str, Any]:
         """Extract product data from Amazon HTML"""
         soup = BeautifulSoup(html, 'lxml')
         
-        # Extract product details
+        
         try:
             price, currency = self._extract_price(soup)
         except ValueError:
-            # As a last-ditch effort, try to extract price from the raw HTML
+            
             logger.info("Attempting to extract price from raw HTML")
             price = None
-            currency = 'INR' if '.in' in self.url else 'USD'  # Default based on domain
+            currency = 'INR' if '.in' in self.url else 'USD' 
             
-            # Look for price patterns in the raw HTML
-            # Amazon often has pricing data in JSON inside the HTML
-            # For Amazon India
+            
             if '.in' in self.url:
                 price_patterns = [
                     r'"priceAmount":\s*(\d+(?:\.\d+)?)',

@@ -7,11 +7,9 @@ import hashlib
 import logging
 from dotenv import load_dotenv
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('database')
 
-# Load environment variables
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///price_tracker.db")
 logger.info(f"Using database: {DATABASE_URL}")
@@ -49,7 +47,7 @@ class PriceHistory(Base):
         return f"<PriceHistory(product_url='{self.product_url}', price={self.price}, timestamp='{self.timestamp}')>"
 
 
-# Create database engine and tables
+
 try:
     engine = create_engine(DATABASE_URL)
     logger.info(f"Database engine created successfully")
@@ -72,7 +70,7 @@ class Database:
     
     def add_product(self, url):
         """Add a new product to track"""
-        # Convert Pydantic URL objects to string if necessary
+      
         url_str = str(url)
         product = Product(url=url_str)
         self.session.merge(product)
@@ -81,13 +79,13 @@ class Database:
     
     def add_price(self, data: dict):
         """Record a new price point for a product"""
-        # Convert URL to string if it's a Pydantic URL object
+      
         url_str = str(data['url'])
         
-        # Generate unique ID using URL and timestamp
+     
         unique_id = hashlib.md5(f"{url_str}_{data['timestamp'].isoformat()}".encode()).hexdigest()
         
-        # Ensure product exists
+        
         self.add_product(url_str)
         
         price_entry = PriceHistory(
@@ -109,7 +107,7 @@ class Database:
     
     def get_price_history(self, url, limit=None):
         """Retrieve price history for a specific product"""
-        # Convert URL to string if it's a Pydantic URL object
+        
         url_str = str(url)
         
         query = (
@@ -125,7 +123,7 @@ class Database:
     
     def get_latest_price(self, url):
         """Retrieve the most recent price for a product"""
-        # Convert URL to string if it's a Pydantic URL object
+      
         url_str = str(url)
         
         return (
@@ -137,7 +135,7 @@ class Database:
     
     def delete_product(self, url):
         """Remove a product and its price history"""
-        # Convert URL to string if it's a Pydantic URL object
+      
         url_str = str(url)
         
         product = self.session.query(Product).filter(Product.url == url_str).first()
