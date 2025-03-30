@@ -20,7 +20,12 @@ An automated system that tracks e-commerce product prices, detects price drops, 
 
 Check out how the Dynamic Price Tracker works in action:
 
-https://github.com/ujjwalr27/dynamic-price-analysis/demo.mp4
+https://github.com/ujjwalr27/Ecommerce-Price-Tracker/blob/main/demo.mp4
+
+<video width="640" height="360" controls>
+  <source src="demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ### Screenshots
 
