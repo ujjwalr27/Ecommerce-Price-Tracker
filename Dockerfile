@@ -7,22 +7,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     libc-dev \
-    make \
-    git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+# Set up Python environment
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install dependencies without using a virtual environment
-# Use a simpler approach that's less prone to path/activation issues
-RUN pip install --upgrade pip wheel setuptools cython && \
+# Install dependencies without virtual environment
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
+# Copy the application
 COPY . .
 
 # Expose the Streamlit port

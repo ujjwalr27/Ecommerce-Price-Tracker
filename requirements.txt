@@ -6,8 +6,8 @@ sqlalchemy==2.0.22
 python-dotenv==1.0.0
 pandas==2.1.1
 plotly==5.17.0
-# Use aiohttp binary wheel or a slightly older version that has wheels available
-aiohttp==3.8.4
+# Use a specific aiohttp version known to have wheels for Python 3.9
+aiohttp==3.8.3
 apscheduler==3.10.4
 streamlit==1.43.2
 matplotlib==3.8.0
