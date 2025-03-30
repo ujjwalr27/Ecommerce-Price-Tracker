@@ -24,19 +24,15 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
-# Copy the application
-COPY . .
+# Copy startup script first and make it executable
+COPY startup.sh .
+RUN chmod +x startup.sh
 
-# Create the start script directly in the container
-RUN echo '#!/bin/bash' > start.sh && \
-    echo 'if [ -z "$PORT" ]; then' >> start.sh && \
-    echo '  export PORT=8501' >> start.sh && \
-    echo 'fi' >> start.sh && \
-    echo 'streamlit run app/dashboard.py --server.port=$PORT --server.address=0.0.0.0' >> start.sh && \
-    chmod +x start.sh
+# Copy the rest of the application
+COPY . .
 
 # Expose the Streamlit port
 EXPOSE 8501
 
 # Start the application
-CMD ["./start.sh"] 
+CMD ["./startup.sh"] 
