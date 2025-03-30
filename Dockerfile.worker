@@ -15,7 +15,6 @@ WORKDIR /app
 # Set up Python environment
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8501
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -27,11 +26,5 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 # Copy the application
 COPY . .
 
-# Make the start script executable
-RUN chmod +x start.sh
-
-# Expose the Streamlit port
-EXPOSE 8501
-
-# Start the application - make sure to use PORT from environment
-CMD ["./start.sh"] 
+# Start the worker process
+CMD python -m app.tasks.scheduler 

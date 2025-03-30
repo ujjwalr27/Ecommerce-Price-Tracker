@@ -1,13 +1,14 @@
 [build]
-builder = "nixpacks"
-buildCommand = "pip install --no-cache-dir --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["/app/**"]
 
 [deploy]
-startCommand = "streamlit run app/dashboard.py"
+startCommand = "DISABLED"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "on-failure"
 
 [nixpacks]
-python_version = "3.9"
+python_version = "3.9.18"
 apt-pkgs = ["build-essential", "python3-dev", "gcc", "libc-dev"] 
