@@ -2,6 +2,8 @@
 
 An automated system that tracks e-commerce product prices, detects price drops, and sends comprehensive price reports.
 
+![Dashboard Overview](screenshots/dashboard.png)
+
 ## Features
 
 - Automated product page scraping from multiple e-commerce sites
@@ -11,6 +13,23 @@ An automated system that tracks e-commerce product prices, detects price drops, 
 - Streamlit dashboard for price trend visualization and report generation
 - Scheduling for automated monitoring and reporting
 - Support for Amazon and other e-commerce sites
+
+## Demo
+
+### Video Demonstration
+
+Check out how the Dynamic Price Tracker works in action:
+
+https://github.com/ujjwalr27/dynamic-price-analysis/demo.mp4
+
+### Screenshots
+
+#### Dashboard Overview
+![Dashboard Overview](screenshots/dashboard.png)
+
+
+#### Email Report
+![Email Report](screenshots/email_report.png)
 
 ## Setup
 
@@ -165,6 +184,22 @@ Features:
 - See detailed price history with charts
 - Send price reports via email
 - Download price history data as CSV
+
+## Deployment
+
+### Deploying to Railway
+
+The application can be easily deployed on Railway:
+
+1. Fork/Clone this repository to your GitHub account
+2. Create a new Railway project
+3. Connect your GitHub repository
+4. Configure environment variables (especially database and email credentials)
+5. Deploy both web application and background worker:
+   - For the web app (dashboard): Use the Dockerfile in the root directory
+   - For the background worker: Use the Dockerfile.worker
+
+![Railway Deployment](screenshots/railway_deployment.png)
 
 ## Troubleshooting
 
