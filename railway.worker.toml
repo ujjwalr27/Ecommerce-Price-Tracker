@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+buildCommand = "apt-get update && apt-get install -y build-essential python3-dev && pip install --upgrade pip wheel setuptools && pip install -r requirements.txt"
+
+[deploy]
+startCommand = "python -m app.tasks.scheduler"
+restartPolicyType = "on-failure"
+
+[nixpacks]
+apt-pkgs = ["build-essential", "python3-dev", "gcc", "libc-dev"] 

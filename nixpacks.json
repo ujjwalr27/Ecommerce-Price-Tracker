@@ -1,0 +1,15 @@
+{
+  "providers": [
+    {
+      "name": "python",
+      "predependencies": [
+        { "apt": ["build-essential", "python3-dev", "gcc", "g++", "libc-dev"] }
+      ],
+      "setup": [
+        "apt-get update",
+        "apt-get install -y build-essential python3-dev gcc g++ libc-dev",
+        "pip install --upgrade pip wheel setuptools cython"
+      ]
+    }
+  ]
+} 
